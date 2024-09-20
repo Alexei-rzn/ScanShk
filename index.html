@@ -17,16 +17,78 @@
         #result {
             margin-top: 20px;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <h1>Сканирование штрих-кода</h1>
+    <button id="scan-button">Сканировать</button>
     <div id="scanner-container"></div>
     <div id="result">
         <p>Результат: <span id="barcode-result">—</span></p>
     </div>
+    <div id="data-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Название товара</th>
+                    <th>Цена</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Данные из таблицы будут отображаться здесь -->
+            </tbody>
+        </table>
+    </div>
 
     <script>
+        // Функция для поиска данных по штрих-коду в Google Sheets
+        async function fetchGoogleSheetData(barcode) {
+            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
+            const response = await fetch(sheetUrl);
+            const data = await response.text();
+            const rows = data.split('\n').map(row => row.split(','));
+            
+            // Ищем строку, где штрих-код совпадает
+            const foundRow = rows.find(row => row.includes(barcode));
+
+            if (foundRow) {
+                return {
+                    name: foundRow[0], // Название товара (пример)
+                    price: foundRow[1], // Цена (пример)
+                    description: foundRow[2] // Описание (пример)
+                };
+            } else {
+                return null;
+            }
+        }
+
+        // Функция для отображения данных в таблице
+        function displayData(data) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = ''; // Очищаем таблицу
+
+            if (data) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${data.name}</td><td>${data.price}</td><td>${data.description}</td>`;
+                tableBody.appendChild(row);
+            } else {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="3">Штрих-код не найден</td>`;
+                tableBody.appendChild(row);
+            }
+        }
+
         // Функция запуска камеры и сканера
         function startScanner() {
             Quagga.init({
@@ -51,21 +113,22 @@
                 Quagga.start(); // Запускаем сканер
             });
 
-            Quagga.onDetected(function (data) {
-                const code = data.codeResult.code;
-                document.getElementById("barcode-result").innerText = code; // Выводим результат
-                console.log("Код штрих-кода: ", code);
+            Quagga.onDetected(async function (data) {
+                const barcode = data.codeResult.code;
+                document.getElementById("barcode-result").innerText = barcode; // Выводим результат
+                console.log("Код штрих-кода: ", barcode);
 
                 // Останавливаем сканер после успешного сканирования
                 Quagga.stop();
                 
-                // После сканирования можно выполнить поиск по базе данных (например, через API или таблицу)
-                // Для повторного сканирования можно заново запустить Quagga.start()
+                // Ищем данные в Google Sheets по штрих-коду
+                const resultData = await fetchGoogleSheetData(barcode);
+                displayData(resultData); // Отображаем данные в таблице
             });
         }
 
-        // Запуск сканера при загрузке страницы
-        document.addEventListener("DOMContentLoaded", function () {
+        // Запуск сканера по нажатию кнопки
+        document.getElementById('scan-button').addEventListener('click', function() {
             startScanner();
         });
     </script>
