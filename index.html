@@ -7,12 +7,20 @@
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <style>
         #scanner-container {
+            position: relative;
             width: 100%;
             max-width: 640px;
             margin: 20px auto;
         }
         video {
             width: 100%;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
         #result {
             margin-top: 20px;
@@ -51,8 +59,11 @@
     <div id="search-results"></div>
 </div>
 
-<!-- Контейнер для камеры -->
-<div id="scanner-container"></div>
+<!-- Контейнер для камеры и холста -->
+<div id="scanner-container">
+    <video id="video"></video>
+    <canvas id="overlay"></canvas>
+</div>
 
 <script>
     const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
@@ -151,7 +162,7 @@
         Quagga.init({
             inputStream: {
                 type: "LiveStream",
-                target: document.querySelector('#scanner-container'),
+                target: document.querySelector('#scanner-container video'),
                 constraints: {
                     width: { min: 640, ideal: 1280, max: 1920 },
                     height: { min: 480, ideal: 720, max: 1080 },
@@ -196,8 +207,9 @@
                 drawingCanvas = Quagga.canvas.dom.overlay;
 
             if (result) {
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
                 if (result.boxes) {
-                    drawingCtx.clearRect(0, 0, parseInt(drawingCanvas.getAttribute("width")), parseInt(drawingCanvas.getAttribute("height")));
                     result.boxes.filter(function (box) {
                         return box !== result.box;
                     }).forEach(function (box) {
@@ -238,4 +250,4 @@
 </script>
 
 </body>
-</html>
+</html
