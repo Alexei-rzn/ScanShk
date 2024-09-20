@@ -104,10 +104,17 @@
             background-color: #4cae4c; /* Темнее при наведении */
         }
 
-        #instructions {
-            margin-top: 20px;
-            text-align: center;
-            color: #555; /* Цвет текста подсказок */
+        #banner {
+            width: 100%;
+            max-width: 640px;
+            height: 150px; /* Высота баннера */
+            background-color: #e7e7e7; /* Цвет фона баннера */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px; /* Отступ сверху */
+            border-radius: 10px; /* Закругленные углы */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Тень для баннера */
         }
     </style>
 </head>
@@ -136,8 +143,8 @@
     <div id="search-results"></div>
 </div>
 
-<div id="instructions">
-    <p>Нажмите "Сканировать", чтобы начать сканирование штрих-кода. Наведите камеру на штрих-код и дождитесь его распознавания.</p>
+<div id="banner">
+    <p>Ваш баннер здесь</p> <!-- Здесь можно вставить изображение или текст для баннера -->
 </div>
 
 <script>
@@ -228,7 +235,9 @@
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 }
+                    height: { ideal: 720 },
+                    // Отключение автофокуса
+                    advanced: [{ torch: true }] // Включение фонарика, если доступно
                 },
             },
             decoder: {
