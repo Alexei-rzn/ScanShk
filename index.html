@@ -14,6 +14,7 @@
         }
         video {
             width: 100%;
+            height: auto;
         }
         canvas {
             position: absolute;
@@ -45,21 +46,17 @@
 
 <h1>Сканирование штрих-кода</h1>
 
-<!-- Выпадающий список для выбора столбцов для вывода -->
 <label for="output-columns">Выберите столбцы для вывода:</label>
 <select id="output-columns" multiple></select>
 
-<!-- Кнопки для сканирования и сброса -->
 <button id="scan-button">Сканировать</button>
 <button id="reset-button">Сброс</button>
 
-<!-- Результат поиска -->
 <div id="result">
     <p>Результат:</p>
     <div id="search-results"></div>
 </div>
 
-<!-- Контейнер для камеры и холста -->
 <div id="scanner-container">
     <video id="video"></video>
     <canvas id="overlay"></canvas>
@@ -67,18 +64,15 @@
 
 <script>
     const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
-
     let data = [];
     let headers = [];
 
-    // Загрузка данных из Google Таблицы
     async function loadGoogleSheetData() {
         const response = await fetch(googleSheetURL);
         const csvData = await response.text();
         parseCSVData(csvData);
     }
 
-    // Парсинг CSV данных
     function parseCSVData(csvData) {
         const rows = csvData.split('\n').map(row => row.split(','));
         headers = rows[0].map(header => header.trim());
@@ -92,10 +86,8 @@
         populateDropdowns();
     }
 
-    // Заполнение выпадающего списка столбцами
     function populateDropdowns() {
         const outputColumnsSelect = document.getElementById('output-columns');
-
         headers.forEach(header => {
             const outputOption = document.createElement('option');
             outputOption.value = header;
@@ -104,7 +96,6 @@
         });
     }
 
-    // Функция для поиска по штрих-коду
     function searchByBarcode(barcode) {
         const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
             .map(option => option.value);
@@ -135,12 +126,11 @@
         }
     }
 
-    // Валидация штрих-кодов и несколько итераций для подтверждения
     let lastScannedCode = '';
     let scanCount = 0;
 
     function validateBarcode(code) {
-        if (code.length === 13) { // Пример длины штрих-кода
+        if (code.length === 13) {
             if (code === lastScannedCode) {
                 scanCount++;
             } else {
@@ -148,7 +138,7 @@
                 scanCount = 1;
             }
 
-            if (scanCount >= 3) { // Штрих-код подтвержден
+            if (scanCount >= 3) {
                 Quagga.stop();
                 searchByBarcode(code);
             }
@@ -157,58 +147,37 @@
         }
     }
 
-    // Функция запуска камеры и сканера с улучшениями
     function startScanner() {
         Quagga.init({
             inputStream: {
                 type: "LiveStream",
                 target: document.querySelector('#scanner-container video'),
                 constraints: {
-                    width: { min: 640, ideal: 1280, max: 1920 },
-                    height: { min: 480, ideal: 720, max: 1080 },
-                    facingMode: "environment",
-                    focusMode: "continuous",
-                    whiteBalanceMode: "continuous"
+                    facingMode: "environment"
                 },
             },
             decoder: {
-                readers: [
-                    "ean_reader", "code_128_reader", "code_39_reader", 
-                    "upc_reader", "upc_e_reader", "codabar_reader",
-                    "i2of5_reader", "2of5_reader", "code_93_reader"
-                ]
+                readers: ["ean_reader", "code_128_reader", "code_39_reader"]
             },
             locate: true,
             locator: {
-                halfSample: true,
-                patchSize: "medium",
-                debug: {
-                    showCanvas: true,
-                    showPatches: true,
-                    showFoundPatches: true,
-                    showSkeleton: true
-                }
+                halfSample: true
             },
-            numOfWorkers: navigator.hardwareConcurrency || 4,
-            frequency: 10,
-            filterBinarization: true
         }, function (err) {
             if (err) {
-                console.log(err);
+                console.error("Ошибка инициализации сканера:", err);
                 return;
             }
-            console.log("Scanner initialized");
+            console.log("Сканер инициализирован");
             Quagga.start();
         });
 
-        // Визуальная обратная связь
         Quagga.onProcessed(function (result) {
             var drawingCtx = Quagga.canvas.ctx.overlay,
                 drawingCanvas = Quagga.canvas.dom.overlay;
 
             if (result) {
                 drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-
                 if (result.boxes) {
                     result.boxes.filter(function (box) {
                         return box !== result.box;
@@ -216,18 +185,15 @@
                         Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
                     });
                 }
-
                 if (result.box) {
                     Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "blue", lineWidth: 2});
                 }
-
                 if (result.codeResult && result.codeResult.code) {
                     Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
                 }
             }
         });
 
-        // Валидация при детектировании
         Quagga.onDetected(function (data) {
             const code = data.codeResult.code;
             console.log("Код штрих-кода: ", code);
@@ -235,7 +201,6 @@
         });
     }
 
-    // Обработчики событий для кнопок
     document.getElementById('scan-button').addEventListener('click', function () {
         startScanner();
     });
@@ -245,9 +210,8 @@
         Quagga.stop(); // Остановка сканера
     });
 
-    // Загружаем данные при загрузке страницы
     loadGoogleSheetData();
 </script>
 
 </body>
-</html
+</html>
