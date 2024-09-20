@@ -25,23 +25,9 @@
     <div id="result">
         <p>Результат: <span id="barcode-result">—</span></p>
         <p>Код, который сканировали: <span id="scanned-barcode">—</span></p>
-        <p>Результат поиска: <span id="search-result">—</span></p>
     </div>
 
     <script>
-        // Функция поиска по базе данных (фиктивная функция для примера)
-        function searchDatabase(barcode) {
-            // Пример данных для поиска
-            const database = {
-                "1111111112221": "Товар 1: Описание товара 1",
-                "2222222223332": "Товар 2: Описание товара 2",
-                "3333333334443": "Товар 3: Описание товара 3"
-            };
-
-            // Возвращаем результат поиска или сообщение, что товар не найден
-            return database[barcode] || "Товар не найден";
-        }
-
         // Функция запуска камеры и сканера
         function startScanner() {
             Quagga.init({
@@ -72,13 +58,10 @@
                 document.getElementById("scanned-barcode").innerText = `Код, который сканировали: ${code}`; // Выводим сканированный код
                 console.log("Код штрих-кода: ", code);
 
-                // Выполняем поиск по базе данных
-                const searchResult = searchDatabase(code);
-                document.getElementById("search-result").innerText = searchResult; // Выводим результат поиска
-
                 // Останавливаем сканер после успешного сканирования
                 Quagga.stop();
                 
+                // После сканирования можно выполнить поиск по базе данных (например, через API или таблицу)
                 // Для повторного сканирования можно заново запустить Quagga.start()
             });
         }
