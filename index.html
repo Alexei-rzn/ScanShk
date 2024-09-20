@@ -6,37 +6,58 @@
     <title>Сканирование штрих-кода</title>
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; /* Высота на весь экран */
+            margin: 0; /* Убираем отступы */
+        }
+
         #scanner-container {
             width: 100%;
             max-width: 640px;
-            margin: 20px auto;
             position: relative;
+            overflow: hidden; /* Убираем прокрутку */
+            border: 2px solid #ccc; /* Добавляем границу */
+            border-radius: 10px; /* Закругляем углы */
         }
+
         video {
             width: 100%;
             display: block; /* Убираем лишние пробелы */
         }
+
         #result {
             margin-top: 20px;
+            text-align: center;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
+
         th, td {
             border: 1px solid black;
             padding: 10px;
             text-align: left;
         }
+
         #output-columns {
             width: 100%;
             padding: 5px;
+            margin: 10px 0;
         }
+
         #loading {
             display: none;
             margin-top: 20px;
         }
+
         .overlay {
             position: absolute;
             top: 0;
@@ -48,16 +69,34 @@
             justify-content: center;
             align-items: center;
         }
+
         .bounding-box {
             border: 2px solid green;
             position: absolute;
             pointer-events: none;
             display: none; /* Скрыто по умолчанию */
         }
+
         .button-container {
             margin-top: 10px;
             display: flex;
             justify-content: space-between;
+            width: 100%; /* Устанавливаем ширину для кнопок */
+        }
+
+        button {
+            flex: 1; /* Занимает равную ширину */
+            margin: 0 5px; /* Отступы между кнопками */
+            padding: 10px;
+            background-color: #5cb85c; /* Цвет кнопки */
+            color: white; /* Цвет текста */
+            border: none; /* Убираем границу */
+            border-radius: 5px; /* Закругляем углы */
+            cursor: pointer; /* Курсор при наведении */
+        }
+
+        button:hover {
+            background-color: #4cae4c; /* Темнее при наведении */
         }
     </style>
 </head>
@@ -203,12 +242,9 @@
             boundingBox.style.width = `${width}px`;
             boundingBox.style.height = `${height}px`;
 
-            Quagga.stop();
+            Quagga.stop(); // Останавливаем сканер после успешного сканирования
+            isScanning = false; // Сбрасываем состояние сканирования
             searchByBarcode(code);
-            setTimeout(() => {
-                isScanning = false;
-                startScanner(); // Позволить повторное сканирование после паузы
-            }, 2000);
         });
     }
 
