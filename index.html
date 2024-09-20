@@ -52,6 +52,11 @@
             position: absolute;
             pointer-events: none;
         }
+        .button-container {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
@@ -61,8 +66,11 @@
 <label for="output-columns">Выберите столбцы для вывода:</label>
 <select id="output-columns" multiple></select>
 
-<button id="scan-button">Сканировать</button>
-<button id="reset-button">Сброс</button>
+<div class="button-container">
+    <button id="scan-button">Сканировать</button>
+    <button id="reset-button">Сброс</button>
+</div>
+
 <div id="loading">Загрузка...</div>
 
 <div id="result">
@@ -171,31 +179,8 @@
                 readers: ["ean_reader", "code_128_reader", "code_39_reader"],
                 multiple: false // Не сканировать несколько штрих-кодов одновременно
             },
-            locate: true, // Включаем автоматическое определение штрих-кода
-            numOfWorkers: 4,
-            decoder: {
-                readers: [
-                    "code_128_reader",
-                    "ean_reader",
-                    "code_39_reader"
-                ],
-                multiple: false
-            },
             locate: true,
-            inputStream: {
-                type: "LiveStream",
-                constraints: {
-                    facingMode: "environment"
-                }
-            },
-            // Настройка постобработки
-            filters: {
-                // Включаем адаптивные пороги и фильтры для улучшения качества
-                "default": {
-                    "min": 0.3,
-                    "max": 1
-                }
-            }
+            numOfWorkers: 4,
         }, function (err) {
             if (err) {
                 console.log(err);
