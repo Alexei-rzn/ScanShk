@@ -93,12 +93,12 @@
         });
     }
 
-    // Функция для поиска по штрих-коду
+    // Функция для поиска по штрих-коду и отображения результата
     function searchByBarcode(barcode) {
         const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
             .map(option => option.value);
         const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = '';
+        resultsContainer.innerHTML = `<p>Сканируемый штрих-код: ${barcode}</p>`; // Вывод штрих-кода
 
         const filteredData = data.filter(item => item['ШК 1'] === barcode || item['ШК 2'] === barcode || item['ШК 3'] === barcode);
 
@@ -118,9 +118,9 @@
             });
 
             tableHTML += `</table>`;
-            resultsContainer.innerHTML = tableHTML;
+            resultsContainer.innerHTML += tableHTML; // Добавляем таблицу к результатам
         } else {
-            resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
+            resultsContainer.innerHTML += '<p>Ничего не найдено</p>';
         }
     }
 
@@ -154,7 +154,7 @@
 
             // Останавливаем сканер после успешного сканирования
             Quagga.stop();
-            searchByBarcode(code);
+            searchByBarcode(code); // Поиск по штрих-коду
         });
     }
 
