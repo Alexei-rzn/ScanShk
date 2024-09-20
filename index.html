@@ -14,6 +14,7 @@
         }
         video {
             width: 100%;
+            display: block; /* Убираем лишние пробелы */
         }
         #result {
             margin-top: 20px;
@@ -51,6 +52,7 @@
             border: 2px solid green;
             position: absolute;
             pointer-events: none;
+            display: none; /* Скрыто по умолчанию */
         }
         .button-container {
             margin-top: 10px;
@@ -80,7 +82,7 @@
 
 <div id="scanner-container">
     <div class="overlay" id="overlay">
-        <div class="bounding-box" id="bounding-box" style="display: none;"></div>
+        <div class="bounding-box" id="bounding-box"></div>
     </div>
 </div>
 
@@ -170,9 +172,9 @@
                 type: "LiveStream",
                 target: document.querySelector('#scanner-container'),
                 constraints: {
+                    facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 },
-                    facingMode: "environment"
+                    height: { ideal: 720 }
                 },
             },
             decoder: {
@@ -180,7 +182,6 @@
                 multiple: false // Не сканировать несколько штрих-кодов одновременно
             },
             locate: true,
-            numOfWorkers: 4,
         }, function (err) {
             if (err) {
                 console.log(err);
