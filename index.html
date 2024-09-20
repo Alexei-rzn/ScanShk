@@ -126,32 +126,11 @@
         }
     }
 
-    let lastScannedCode = '';
-    let scanCount = 0;
-
-    function validateBarcode(code) {
-        if (code.length === 13) {
-            if (code === lastScannedCode) {
-                scanCount++;
-            } else {
-                lastScannedCode = code;
-                scanCount = 1;
-            }
-
-            if (scanCount >= 3) {
-                Quagga.stop();
-                searchByBarcode(code);
-            }
-        } else {
-            console.log("Некорректный штрих-код длиной: ", code.length);
-        }
-    }
-
     function startScanner() {
         Quagga.init({
             inputStream: {
                 type: "LiveStream",
-                target: document.querySelector('#scanner-container video'),
+                target: document.querySelector('#video'),
                 constraints: {
                     facingMode: "environment"
                 },
@@ -160,9 +139,6 @@
                 readers: ["ean_reader", "code_128_reader", "code_39_reader"]
             },
             locate: true,
-            locator: {
-                halfSample: true
-            },
         }, function (err) {
             if (err) {
                 console.error("Ошибка инициализации сканера:", err);
@@ -172,32 +148,11 @@
             Quagga.start();
         });
 
-        Quagga.onProcessed(function (result) {
-            var drawingCtx = Quagga.canvas.ctx.overlay,
-                drawingCanvas = Quagga.canvas.dom.overlay;
-
-            if (result) {
-                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-                if (result.boxes) {
-                    result.boxes.filter(function (box) {
-                        return box !== result.box;
-                    }).forEach(function (box) {
-                        Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {color: "green", lineWidth: 2});
-                    });
-                }
-                if (result.box) {
-                    Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {color: "blue", lineWidth: 2});
-                }
-                if (result.codeResult && result.codeResult.code) {
-                    Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {color: 'red', lineWidth: 3});
-                }
-            }
-        });
-
         Quagga.onDetected(function (data) {
             const code = data.codeResult.code;
             console.log("Код штрих-кода: ", code);
-            validateBarcode(code);
+            searchByBarcode(code);
+            Quagga.stop(); // Остановка после сканирования
         });
     }
 
