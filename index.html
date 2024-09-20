@@ -27,154 +27,149 @@
             padding: 10px;
             text-align: left;
         }
+        #output-columns {
+            width: 100%;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Сканирование штрих-кода</h1>
-    
-    <label for="columns-select">Выберите столбцы для отображения:</label>
-    <select id="columns-select" multiple>
-        <option value="name">Название товара</option>
-        <option value="price">Цена</option>
-        <option value="description">Описание</option>
-    </select>
 
-    <br><br>
-    <button id="scan-button">Сканировать</button>
-    <button id="reset-button">Сброс</button>
+<h1>Сканирование штрих-кода</h1>
 
-    <div id="scanner-container"></div>
-    <div id="result">
-        <p>Результат: <span id="barcode-result">—</span></p>
-    </div>
-    <div id="data-table">
-        <table>
-            <thead>
-                <tr id="table-header">
-                    <!-- Заголовки выбранных колонок -->
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- Данные из таблицы будут отображаться здесь -->
-            </tbody>
-        </table>
-    </div>
+<!-- Выпадающий список для выбора столбцов для вывода -->
+<label for="output-columns">Выберите столбцы для вывода:</label>
+<select id="output-columns" multiple></select>
 
-    <script>
-        // Функция для поиска данных по штрих-коду в Google Sheets
-        async function fetchGoogleSheetData(barcode) {
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
-            const response = await fetch(sheetUrl);
-            const data = await response.text();
-            const rows = data.split('\n').map(row => row.split(','));
-            
-            // Ищем строку, где штрих-код совпадает
-            const foundRow = rows.find(row => row.includes(barcode));
+<!-- Кнопки для сканирования и сброса -->
+<button id="scan-button">Сканировать</button>
+<button id="reset-button">Сброс</button>
 
-            if (foundRow) {
-                return {
-                    name: foundRow[0], // Название товара (пример)
-                    price: foundRow[1], // Цена (пример)
-                    description: foundRow[2] // Описание (пример)
-                };
-            } else {
-                return null;
-            }
-        }
+<!-- Результат поиска -->
+<div id="result">
+    <p>Результат:</p>
+    <div id="search-results"></div>
+</div>
 
-        // Функция для отображения данных в таблице
-        function displayData(data) {
-            const tableBody = document.getElementById('table-body');
-            tableBody.innerHTML = ''; // Очищаем таблицу
+<!-- Контейнер для камеры -->
+<div id="scanner-container"></div>
 
-            const selectedColumns = Array.from(document.getElementById('columns-select').selectedOptions).map(option => option.value);
-            
-            if (data) {
-                const row = document.createElement('tr');
-                selectedColumns.forEach(column => {
-                    const cell = document.createElement('td');
-                    cell.innerText = data[column];
-                    row.appendChild(cell);
+<script>
+    const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
+
+    let data = [];
+    let headers = [];
+
+    // Загрузка данных из Google Таблицы
+    async function loadGoogleSheetData() {
+        const response = await fetch(googleSheetURL);
+        const csvData = await response.text();
+        parseCSVData(csvData);
+    }
+
+    // Парсинг CSV данных
+    function parseCSVData(csvData) {
+        const rows = csvData.split('\n').map(row => row.split(','));
+        headers = rows[0].map(header => header.trim());
+        data = rows.slice(1).map(row => {
+            let obj = {};
+            row.forEach((cell, index) => {
+                obj[headers[index]] = cell.trim();
+            });
+            return obj;
+        });
+        populateDropdowns();
+    }
+
+    // Заполнение выпадающего списка столбцами
+    function populateDropdowns() {
+        const outputColumnsSelect = document.getElementById('output-columns');
+
+        headers.forEach(header => {
+            const outputOption = document.createElement('option');
+            outputOption.value = header;
+            outputOption.textContent = header;
+            outputColumnsSelect.appendChild(outputOption);
+        });
+    }
+
+    // Функция для поиска по штрих-коду
+    function searchByBarcode(barcode) {
+        const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
+            .map(option => option.value);
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = '';
+
+        const filteredData = data.filter(item => item['ШК 1'] === barcode || item['ШК 2'] === barcode || item['ШК 3'] === barcode);
+
+        if (filteredData.length > 0) {
+            let tableHTML = `<table border="1"><tr>`;
+            outputColumns.forEach(column => {
+                tableHTML += `<th>${column}</th>`;
+            });
+            tableHTML += `</tr>`;
+
+            filteredData.forEach(item => {
+                tableHTML += `<tr>`;
+                outputColumns.forEach(column => {
+                    tableHTML += `<td>${item[column]}</td>`;
                 });
-                tableBody.appendChild(row);
-            } else {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
-                cell.colSpan = selectedColumns.length;
-                cell.innerText = "Штрих-код не найден";
-                row.appendChild(cell);
-                tableBody.appendChild(row);
-            }
-        }
-
-        // Функция для обновления заголовков таблицы
-        function updateTableHeaders() {
-            const tableHeader = document.getElementById('table-header');
-            tableHeader.innerHTML = ''; // Очищаем заголовки
-
-            const selectedColumns = Array.from(document.getElementById('columns-select').selectedOptions).map(option => option.text);
-            selectedColumns.forEach(column => {
-                const header = document.createElement('th');
-                header.innerText = column;
-                tableHeader.appendChild(header);
+                tableHTML += `</tr>`;
             });
-        }
 
-        // Функция запуска камеры и сканера
-        function startScanner() {
-            Quagga.init({
-                inputStream: {
-                    type: "LiveStream",
-                    target: document.querySelector('#scanner-container'), // Вставляем поток видео в контейнер
-                    constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment" // Используем заднюю камеру
-                    },
+            tableHTML += `</table>`;
+            resultsContainer.innerHTML = tableHTML;
+        } else {
+            resultsContainer.innerHTML = '<p>Ничего не найдено</p>';
+        }
+    }
+
+    // Функция запуска камеры и сканера
+    function startScanner() {
+        Quagga.init({
+            inputStream: {
+                type: "LiveStream",
+                target: document.querySelector('#scanner-container'), // Вставляем поток видео в контейнер
+                constraints: {
+                    width: 640,
+                    height: 480,
+                    facingMode: "environment" // Используем заднюю камеру
                 },
-                decoder: {
-                    readers: ["ean_reader", "code_128_reader", "code_39_reader"] // Типы штрих-кодов для распознавания
-                }
-            }, function (err) {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-                console.log("Scanner initialized");
-                Quagga.start(); // Запускаем сканер
-            });
-
-            Quagga.onDetected(async function (data) {
-                const barcode = data.codeResult.code;
-                document.getElementById("barcode-result").innerText = barcode; // Выводим результат
-                console.log("Код штрих-кода: ", barcode);
-
-                // Останавливаем сканер после успешного сканирования
-                Quagga.stop();
-                
-                // Ищем данные в Google Sheets по штрих-коду
-                const resultData = await fetchGoogleSheetData(barcode);
-                displayData(resultData); // Отображаем данные в таблице
-            });
-        }
-
-        // Функция для сброса результатов
-        function resetScanner() {
-            document.getElementById("barcode-result").innerText = '—';
-            document.getElementById("table-body").innerHTML = ''; // Очищаем таблицу
-            document.getElementById("table-header").innerHTML = ''; // Очищаем заголовки
-        }
-
-        // Запуск сканера по нажатию кнопки
-        document.getElementById('scan-button').addEventListener('click', function() {
-            updateTableHeaders(); // Обновляем заголовки перед сканированием
-            startScanner();
+            },
+            decoder: {
+                readers: ["ean_reader", "code_128_reader", "code_39_reader"] // Типы штрих-кодов для распознавания
+            }
+        }, function (err) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log("Scanner initialized");
+            Quagga.start(); // Запускаем сканер
         });
 
-        // Сброс по нажатию кнопки
-        document.getElementById('reset-button').addEventListener('click', function() {
-            resetScanner();
+        Quagga.onDetected(function (data) {
+            const code = data.codeResult.code;
+            console.log("Код штрих-кода: ", code);
+
+            // Останавливаем сканер после успешного сканирования
+            Quagga.stop();
+            searchByBarcode(code);
         });
-    </script>
+    }
+
+    // Обработчики событий для кнопок
+    document.getElementById('scan-button').addEventListener('click', function () {
+        startScanner();
+    });
+
+    document.getElementById('reset-button').addEventListener('click', function () {
+        document.getElementById('search-results').innerHTML = ''; // Очистка результатов поиска
+    });
+
+    // Загружаем данные при загрузке страницы
+    loadGoogleSheetData();
+</script>
+
 </body>
 </html>
