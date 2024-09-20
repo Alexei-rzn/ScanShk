@@ -24,7 +24,6 @@
     <div id="scanner-container"></div>
     <div id="result">
         <p>Результат: <span id="barcode-result">—</span></p>
-        <p>Код, который сканировали: <span id="scanned-barcode">—</span></p>
     </div>
 
     <script>
@@ -54,8 +53,7 @@
 
             Quagga.onDetected(function (data) {
                 const code = data.codeResult.code;
-                document.getElementById("barcode-result").innerText = code;
-                document.getElementById("scanned-barcode").innerText = `Код, который сканировали: ${code}`; // Выводим сканированный код
+                document.getElementById("barcode-result").innerText = code; // Выводим результат
                 console.log("Код штрих-кода: ", code);
 
                 // Останавливаем сканер после успешного сканирования
