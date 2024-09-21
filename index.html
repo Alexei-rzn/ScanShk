@@ -129,7 +129,8 @@
 <select id="output-columns" multiple></select>
 
 <div class="button-container">
-    <button id="scan-button">Сканировать</button>
+    <button id="scan-barcode">Сканировать ШК</button>
+    <button id="scan-qr">Сканировать QR</button>
     <button id="reset-button">Сброс</button>
 </div>
 
@@ -149,6 +150,8 @@
 
     let data = [];
     let headers = [];
+    let isScanning = false;
+    let currentScannerType = ''; // Переменная для хранения типа сканера
 
     async function loadGoogleSheetData() {
         document.getElementById('loading').style.display = 'block';
@@ -218,12 +221,21 @@
         }
     }
 
-    let isScanning = false;
-
-    function startScanner() {
+    function startScanner(type) {
         if (isScanning) return;
         isScanning = true;
         document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
+
+        // Выбор типа сканера
+        const readers = type === 'barcode' ? [
+            "ean_reader",      // EAN-13 и EAN-8
+            "code_128_reader", // Code 128
+            "code_39_reader",  // Code 39
+            "upc_reader",      // UPC
+            "code_93_reader",  // Code 93
+            "codabar_reader",  // Codabar
+            "i2of5_reader"     // Interleaved 2 of 5
+        ] : ["qr_reader"]; // Для QR-кодов
 
         Quagga.init({
             inputStream: {
@@ -232,23 +244,11 @@
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 },
-                    // Отключение зума
-                    advanced: [{ torch: true }] // Включение фонарика, если доступно
+                    height: { ideal: 720 }
                 },
             },
             decoder: {
-                readers: [
-                    "ean_reader",      // EAN-13 и EAN-8
-                    "code_128_reader", // Code 128
-                    "code_39_reader",  // Code 39
-                    "upc_reader",      // UPC
-                    "code_93_reader",  // Code 93
-                    "codabar_reader",  // Codabar
-                    "i2of5_reader",    // Interleaved 2 of 5
-                    "qr_reader",       // QR-коды
-                    "matrix_reader"    // Data Matrix
-                ],
+                readers: readers,
                 multiple: false // Не сканировать несколько штрих-кодов одновременно
             },
             locate: true,
@@ -265,7 +265,7 @@
 
         Quagga.onDetected(function (data) {
             const code = data.codeResult.code;
-            console.log("Код штрих-кода: ", code);
+            console.log("Код: ", code);
             const { x, y, width, height } = data.box; // Получаем координаты рамки
             const boundingBox = document.getElementById('bounding-box');
             boundingBox.style.display = 'block';
@@ -280,8 +280,14 @@
         });
     }
 
-    document.getElementById('scan-button').addEventListener('click', function () {
-        startScanner();
+    document.getElementById('scan-barcode').addEventListener('click', function () {
+        currentScannerType = 'barcode';
+        startScanner(currentScannerType);
+    });
+
+    document.getElementById('scan-qr').addEventListener('click', function () {
+        currentScannerType = 'qr';
+        startScanner(currentScannerType);
     });
 
     document.getElementById('reset-button').addEventListener('click', function () {
