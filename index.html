@@ -108,13 +108,10 @@
             width: 100%;
             max-width: 640px;
             height: 150px; /* Высота баннера */
-            background-color: #e7e7e7; /* Цвет фона баннера */
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin-top: 20px; /* Отступ сверху */
             border-radius: 10px; /* Закругленные углы */
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Тень для баннера */
+            cursor: pointer; /* Курсор при наведении */
         }
     </style>
 </head>
@@ -143,14 +140,16 @@
     <div id="search-results"></div>
 </div>
 
-<!--<div id="banner">
-    <p>Ваш баннер здесь</p> <!-- Здесь можно вставить изображение или текст для баннера
-</div>*/-->
-<div id="banner">
-    <img src="Память телефона/Download/Без названия.png" 
-        alt="Ваш баннер" 
-        style="width: 100%; height: 100%; object-fit: cover;">
-</div>
+<a href="https://relef.ru/" target="_blank"> <!-- Переход по ссылке на сайт -->
+    <img id="banner" src="file:///Память%20телефона/Download/Без%20названия.png" alt="Ваш баннер"> <!-- Локальный путь к изображению -->
+</a>
+
+<!-- Пример, если баннер находится в интернете
+<a href="https://relef.ru/" target="_blank">
+    <img id="banner" src="https://example.com/your-banner-image.png" alt="Ваш баннер">
+</a>
+-->
+
 <script>
     const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
 
@@ -239,9 +238,7 @@
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 },
-                    // Отключение автофокуса
-                    advanced: [{ torch: true }] // Включение фонарика, если доступно
+                    height: { ideal: 720 }
                 },
             },
             decoder: {
