@@ -232,7 +232,9 @@
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 }
+                    height: { ideal: 720 },
+                    // Отключение зума
+                    advanced: [{ torch: true }] // Включение фонарика, если доступно
                 },
             },
             decoder: {
