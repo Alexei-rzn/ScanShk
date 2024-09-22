@@ -125,12 +125,17 @@
     </div>
 </div>
 
+<label for="code-type">Выберите тип кода:</label>
+<select id="code-type">
+    <option value="barcode">Штрих-код</option>
+    <option value="qr">QR-код</option>
+</select>
+
 <label for="output-columns">Выберите столбцы для вывода:</label>
 <select id="output-columns" multiple></select>
 
 <div class="button-container">
-    <button id="scan-barcode">Сканировать ШК</button>
-    <button id="scan-qr">Сканировать QR</button>
+    <button id="scan">Сканировать</button>
     <button id="reset-button">Сброс</button>
 </div>
 
@@ -194,7 +199,7 @@
         const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
             .map(option => option.value);
         const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = `<p>Сканируемый штрих-код: ${barcode}</p>`;
+        resultsContainer.innerHTML = `<p>Сканируемый код: ${barcode}</p>`;
 
         const filteredData = data.filter(item => item['ШК 1'] === barcode || item['ШК 2'] === barcode || item['ШК 3'] === barcode);
 
@@ -225,7 +230,6 @@
         isScanning = true;
         document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
 
-        // Выбор типа сканера
         const readers = type === 'barcode' ? [
             "ean_reader",      // EAN-13 и EAN-8
             "code_128_reader", // Code 128
@@ -234,7 +238,10 @@
             "code_93_reader",  // Code 93
             "codabar_reader",  // Codabar
             "i2of5_reader"     // Interleaved 2 of 5
-        ] : ["qr_reader"]; // Для QR-кодов
+        ] : [
+            "qr_reader",       // QR-коды
+            "matrix_reader"    // Data Matrix
+        ]; // Для QR и Data Matrix
 
         Quagga.init({
             inputStream: {
@@ -283,12 +290,9 @@
         });
     }
 
-    document.getElementById('scan-barcode').addEventListener('click', function () {
-        startScanner('barcode');
-    });
-
-    document.getElementById('scan-qr').addEventListener('click', function () {
-        startScanner('qr');
+    document.getElementById('scan').addEventListener('click', function () {
+        const codeType = document.getElementById('code-type').value; // Получаем выбранный тип кода
+        startScanner(codeType);
     });
 
     document.getElementById('reset-button').addEventListener('click', function () {
