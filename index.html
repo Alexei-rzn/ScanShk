@@ -117,7 +117,7 @@
 </head>
 <body>
 
-<h1>Сканирование штрих-кода и QR-кода</h1>
+<h1>Сканирование штрих-кода</h1>
 
 <div id="scanner-container">
     <div class="overlay" id="overlay">
@@ -127,8 +127,15 @@
 
 <label for="code-type">Выберите тип кода:</label>
 <select id="code-type">
-    <option value="barcode">Штрих-код</option>
-    <option value="qr">QR-код</option>
+    <option value="ean_reader">EAN-13 и EAN-8</option>
+    <option value="code_128_reader">Code 128</option>
+    <option value="code_39_reader">Code 39</option>
+    <option value="upc_reader">UPC</option>
+    <option value="code_93_reader">Code 93</option>
+    <option value="codabar_reader">Codabar</option>
+    <option value="i2of5_reader">Interleaved 2 of 5</option>
+    <option value="qr_reader">QR-код</option>
+    <option value="matrix_reader">Data Matrix</option>
 </select>
 
 <label for="output-columns">Выберите столбцы для вывода:</label>
@@ -225,23 +232,10 @@
         }
     }
 
-    function startScanner(type) {
+    function startScanner(reader) {
         if (isScanning) return;
         isScanning = true;
         document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
-
-        const readers = type === 'barcode' ? [
-            "ean_reader",      // EAN-13 и EAN-8
-            "code_128_reader", // Code 128
-            "code_39_reader",  // Code 39
-            "upc_reader",      // UPC
-            "code_93_reader",  // Code 93
-            "codabar_reader",  // Codabar
-            "i2of5_reader"     // Interleaved 2 of 5
-        ] : [
-            "qr_reader",       // QR-коды
-            "matrix_reader"    // Data Matrix
-        ]; // Для QR и Data Matrix
 
         Quagga.init({
             inputStream: {
@@ -258,7 +252,7 @@
                 },
             },
             decoder: {
-                readers: readers,
+                readers: [reader], // Используем выбранный ридер
                 multiple: false // Не сканировать несколько штрих-кодов одновременно
             },
             locate: true,
@@ -291,8 +285,8 @@
     }
 
     document.getElementById('scan').addEventListener('click', function () {
-        const codeType = document.getElementById('code-type').value; // Получаем выбранный тип кода
-        startScanner(codeType);
+        const selectedReader = document.getElementById('code-type').value; // Получаем выбранный тип кода
+        startScanner(selectedReader);
     });
 
     document.getElementById('reset-button').addEventListener('click', function () {
