@@ -151,7 +151,6 @@
     let data = [];
     let headers = [];
     let isScanning = false;
-    let currentScannerType = ''; // Переменная для хранения типа сканера
 
     async function loadGoogleSheetData() {
         document.getElementById('loading').style.display = 'block';
@@ -244,7 +243,11 @@
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 }
+                    height: { ideal: 720 },
+                    advanced: [
+                        { autofocus: false }, // Отключаем автофокус
+                        { torch: true } // Включаем фонарик, если доступно
+                    ]
                 },
             },
             decoder: {
@@ -281,13 +284,11 @@
     }
 
     document.getElementById('scan-barcode').addEventListener('click', function () {
-        currentScannerType = 'barcode';
-        startScanner(currentScannerType);
+        startScanner('barcode');
     });
 
     document.getElementById('scan-qr').addEventListener('click', function () {
-        currentScannerType = 'qr';
-        startScanner(currentScannerType);
+        startScanner('qr');
     });
 
     document.getElementById('reset-button').addEventListener('click', function () {
