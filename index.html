@@ -3,309 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканирование штрих-кода</title>
-    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+    <title>Сканер штрих-кодов</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh; /* Высота на весь экран */
-            margin: 0; /* Убираем отступы */
-            background-color: #f7f7f7; /* Фон страницы */
-            overflow: hidden; /* Убираем прокрутку */
-        }
-
         #scanner-container {
-            width: 100%;
-            height: 100%; /* Задаем высоту на весь экран */
             position: relative;
-            overflow: hidden; /* Убираем прокрутку */
-            display: none; /* Скрыто по умолчанию */
-            background-color: black; /* Фон камеры */
-        }
-
-        video {
             width: 100%;
-            height: 100%; /* Задаем высоту на весь экран */
-            display: block; /* Убираем лишние пробелы */
+            height: 100vh; /* Высота контейнера на весь экран */
+            display: none;
+            background-color: black;
         }
-
-        #result {
-            width: 100%;
-            max-width: 640px;
-            text-align: center;
+        #bounding-box {
+            position: absolute;
+            border: 2px solid red;
+            display: none;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: left;
-        }
-
-        #output-columns {
-            width: 100%;
-            padding: 5px;
-            margin: 10px 0;
-        }
-
         #loading {
             display: none;
-            margin-top: 20px;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .bounding-box {
-            border: 2px solid green;
-            position: absolute;
-            pointer-events: none;
-            display: none; /* Скрыто по умолчанию */
-        }
-
-        .button-container {
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-            width: 100%; /* Устанавливаем ширину для кнопок */
-        }
-
-        button {
-            flex: 1; /* Занимает равную ширину */
-            margin: 0 5px; /* Отступы между кнопками */
-            padding: 10px;
-            background-color: #5cb85c; /* Цвет кнопки */
-            color: white; /* Цвет текста */
-            border: none; /* Убираем границу */
-            border-radius: 5px; /* Закругляем углы */
-            cursor: pointer; /* Курсор при наведении */
-            transition: background-color 0.3s; /* Плавный переход цвета */
-        }
-
-        button:hover {
-            background-color: #4cae4c; /* Темнее при наведении */
-        }
-
-        #banner {
-            width: 100%;
-            max-width: 640px;
-            height: 150px; /* Высота баннера */
-            margin-top: 20px; /* Отступ сверху */
-            border-radius: 10px; /* Закругленные углы */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Тень для баннера */
-            cursor: pointer; /* Курсор при наведении */
         }
     </style>
 </head>
 <body>
+    <h1>Сканер штрих-кодов</h1>
+    
+    <label for="code-type">Тип штрих-кода:</label>
+    <select id="code-type">
+        <option value="ean_reader">EAN</option>
+        <option value="code_128_reader">Code 128</option>
+        <option value="upc_reader">UPC</option>
+    </select>
+    <br><br>
 
-<h1>Сканирование штрих-кода</h1>
+    <label for="output-columns">Выберите выводимые колонки:</label>
+    <select id="output-columns" multiple></select>
+    <br><br>
 
-<div id="scanner-container">
-    <div class="overlay" id="overlay">
-        <div class="bounding-box" id="bounding-box"></div>
-    </div>
-</div>
-
-<label for="code-type">Выберите тип кода:</label>
-<select id="code-type">
-    <option value="ean_reader">EAN-13 и EAN-8</option>
-    <option value="code_128_reader">Code 128</option>
-    <option value="code_39_reader">Code 39</option>
-    <option value="upc_reader">UPC</option>
-    <option value="code_93_reader">Code 93</option>
-    <option value="codabar_reader">Codabar</option>
-    <option value="i2of5_reader">Interleaved 2 of 5</option>
-    <option value="qr_reader">QR-код</option>
-    <option value="matrix_reader">Data Matrix</option>
-</select>
-
-<label for="output-columns">Выберите столбцы для вывода:</label>
-<select id="output-columns" multiple></select>
-
-<div class="button-container">
-    <button id="scan">Сканировать</button>
-    <button id="reset-button">Сброс</button>
-</div>
-
-<div id="loading">Загрузка...</div>
-
-<div id="result">
-    <p>Результат:</p>
+    <button id="scan">Начать сканирование</button>
+    <button id="reset-button">Сбросить</button>
+    
+    <div id="scanner-container"></div>
+    <div id="bounding-box"></div>
+    
+    <div id="loading">Загрузка...</div>
     <div id="search-results"></div>
-</div>
 
-<a href="https://relef.ru/" target="_blank">
-    <img id="banner" src="https://raw.githubusercontent.com/Alexei-rzn/ScanShk/refs/heads/main/%D0%91%D0%B5%D0%B7%20%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F.png" alt="Ваш баннер">
-</a>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+        const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
 
-<script>
-    const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT3oeQ768KbbMYrfrrijNYswWat4GdsDzAa7iRZZ2vLqjvg6zbTQ5Efe1LFn9wRfULaghfYoRGruy1w/pub?output=csv';
+        let data = [];
+        let headers = [];
+        let isScanning = false;
 
-    let data = [];
-    let headers = [];
-    let isScanning = false;
-
-    async function loadGoogleSheetData() {
-        document.getElementById('loading').style.display = 'block';
-        try {
-            const response = await fetch(googleSheetURL);
-            if (!response.ok) throw new Error('Ошибка загрузки данных');
-            const csvData = await response.text();
-            parseCSVData(csvData);
-        } catch (error) {
-            console.error(error);
-            alert('Ошибка загрузки данных. Пожалуйста, попробуйте позже.');
-        } finally {
-            document.getElementById('loading').style.display = 'none';
+        async function loadGoogleSheetData() {
+            document.getElementById('loading').style.display = 'block';
+            try {
+                const response = await fetch(googleSheetURL);
+                if (!response.ok) throw new Error('Ошибка загрузки данных');
+                const csvData = await response.text();
+                parseCSVData(csvData);
+            } catch (error) {
+                console.error(error);
+                alert('Ошибка загрузки данных. Пожалуйста, попробуйте позже.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
         }
-    }
 
-    function parseCSVData(csvData) {
-        const rows = csvData.split('\n').map(row => row.split(','));
-        headers = rows[0].map(header => header.trim());
-        data = rows.slice(1).map(row => {
-            let obj = {};
-            row.forEach((cell, index) => {
-                obj[headers[index]] = cell.trim();
+        function parseCSVData(csvData) {
+            const rows = csvData.split('\n').map(row => row.split(','));
+            headers = rows[0].map(header => header.trim());
+            data = rows.slice(1).map(row => {
+                let obj = {};
+                row.forEach((cell, index) => {
+                    obj[headers[index]] = cell.trim();
+                });
+                return obj;
             });
-            return obj;
-        });
-        populateDropdowns();
-    }
+            populateDropdowns();
+        }
 
-    function populateDropdowns() {
-        const outputColumnsSelect = document.getElementById('output-columns');
-        headers.forEach(header => {
-            const outputOption = document.createElement('option');
-            outputOption.value = header;
-            outputOption.textContent = header;
-            outputColumnsSelect.appendChild(outputOption);
-        });
-    }
-
-    function searchByBarcode(barcode) {
-        const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
-            .map(option => option.value);
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = `<p>Сканируемый код: ${barcode}</p>`;
-
-        const filteredData = data.filter(item => item['ШК 1'] === barcode || item['ШК 2'] === barcode || item['ШК 3'] === barcode);
-
-        if (filteredData.length > 0) {
-            let tableHTML = `<table border="1"><tr>`;
-            outputColumns.forEach(column => {
-                tableHTML += `<th>${column}</th>`;
+        function populateDropdowns() {
+            const outputColumnsSelect = document.getElementById('output-columns');
+            headers.forEach(header => {
+                const outputOption = document.createElement('option');
+                outputOption.value = header;
+                outputOption.textContent = header;
+                outputColumnsSelect.appendChild(outputOption);
             });
-            tableHTML += `</tr>`;
+        }
 
-            filteredData.forEach(item => {
-                tableHTML += `<tr>`;
+        function searchByBarcode(barcode) {
+            const outputColumns = Array.from(document.getElementById('output-columns').selectedOptions)
+                .map(option => option.value);
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = `<p>Сканируемый код: ${barcode}</p>`;
+
+            const filteredData = data.filter(item => item['ШК 1'] === barcode || item['ШК 2'] === barcode || item['ШК 3'] === barcode);
+
+            if (filteredData.length > 0) {
+                let tableHTML = `<table border="1"><tr>`;
                 outputColumns.forEach(column => {
-                    tableHTML += `<td>${item[column]}</td>`;
+                    tableHTML += `<th>${column}</th>`;
                 });
                 tableHTML += `</tr>`;
+
+                filteredData.forEach(item => {
+                    tableHTML += `<tr>`;
+                    outputColumns.forEach(column => {
+                        tableHTML += `<td>${item[column]}</td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `</table>`;
+                resultsContainer.innerHTML += tableHTML;
+            } else {
+                resultsContainer.innerHTML += '<p>Ничего не найдено</p>';
+            }
+        }
+
+        function startScanner(reader) {
+            if (isScanning) return;
+            isScanning = true;
+            document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
+
+            // Разворачиваем окно камеры на весь экран
+            const scannerContainer = document.getElementById('scanner-container');
+            scannerContainer.style.display = 'block'; // Показываем контейнер камеры
+
+            Quagga.init({
+                inputStream: {
+                    type: "LiveStream",
+                    target: scannerContainer,
+                    constraints: {
+                        facingMode: "environment",
+                        width: { ideal: 1280 }, // Установка максимального разрешения
+                        height: { ideal: 720 },
+                        advanced: [
+                            { autofocus: true }, // Включаем автофокус
+                            { torch: true } // Включаем фонарик, если доступно
+                        ]
+                    },
+                },
+                decoder: {
+                    readers: [reader], // Используем выбранный ридер
+                    multiple: false // Не сканировать несколько штрих-кодов одновременно
+                },
+                locate: true,
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    isScanning = false;
+                    return;
+                }
+                console.log("Scanner initialized");
+                document.getElementById('loading').style.display = 'none'; // Скрыть индикатор загрузки
+                Quagga.start();
             });
 
-            tableHTML += `</table>`;
-            resultsContainer.innerHTML += tableHTML;
-        } else {
-            resultsContainer.innerHTML += '<p>Ничего не найдено</p>';
+            Quagga.onDetected(function (data) {
+                const code = data.codeResult.code;
+                console.log("Код: ", code);
+                const { x, y, width, height } = data.box; // Получаем координаты рамки
+                const boundingBox = document.getElementById('bounding-box');
+                boundingBox.style.display = 'block';
+                boundingBox.style.left = `${x}px`;
+                boundingBox.style.top = `${y}px`;
+                boundingBox.style.width = `${width}px`;
+                boundingBox.style.height = `${height}px`;
+
+                Quagga.stop(); // Останавливаем сканер после успешного сканирования
+                isScanning = false; // Сбрасываем состояние сканирования
+                searchByBarcode(code);
+
+                // Скрываем окно камеры после сканирования
+                scannerContainer.style.display = 'none';
+            });
         }
-    }
 
-    function startScanner(reader) {
-        if (isScanning) return;
-        isScanning = true;
-        document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
-
-        // Разворачиваем окно камеры на весь экран
-        const scannerContainer = document.getElementById('scanner-container');
-        scannerContainer.style.display = 'block'; // Показываем контейнер камеры
-
-        Quagga.init({
-            inputStream: {
-                type: "LiveStream",
-                target: scannerContainer,
-                constraints: {
-                    facingMode: "environment",
-                    width: { ideal: 1280 }, // Установка максимального разрешения
-                    height: { ideal: 720 },
-                    advanced: [
-                        { autofocus: true }, // Включаем автофокус
-                        { torch: true } // Включаем фонарик, если доступно
-                    ]
-                },
-            },
-            decoder: {
-                readers: [reader], // Используем выбранный ридер
-                multiple: false // Не сканировать несколько штрих-кодов одновременно
-            },
-            locate: true,
-        }, function (err) {
-            if (err) {
-                console.log(err);
-                isScanning = false;
-                return;
-            }
-            console.log("Scanner initialized");
-            document.getElementById('loading').style.display = 'none'; // Скрыть индикатор загрузки
-            Quagga.start();
+        document.getElementById('scan').addEventListener('click', function () {
+            const selectedReader = document.getElementById('code-type').value; // Получаем выбранный тип кода
+            startScanner(selectedReader);
         });
 
-        Quagga.onDetected(function (data) {
-            const code = data.codeResult.code;
-            console.log("Код: ", code);
-            const { x, y, width, height } = data.box; // Получаем координаты рамки
-            const boundingBox = document.getElementById('bounding-box');
-            boundingBox.style.display = 'block';
-            boundingBox.style.left = `${x}px`;
-            boundingBox.style.top = `${y}px`;
-            boundingBox.style.width = `${width}px`;
-            boundingBox.style.height = `${height}px`;
-
-            Quagga.stop(); // Останавливаем сканер после успешного сканирования
-            isScanning = false; // Сбрасываем состояние сканирования
-            searchByBarcode(code);
-
-            // Скрываем окно камеры после сканирования
-            scannerContainer.style.display = 'none';
+        document.getElementById('reset-button').addEventListener('click', function () {
+            document.getElementById('search-results').innerHTML = '';
+            Quagga.stop();
+            isScanning = false; // Сброс состояния сканирования
+            document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку
+            document.getElementById('scanner-container').style.display = 'none'; // Скрыть контейнер камеры
         });
-    }
 
-    document.getElementById('scan').addEventListener('click', function () {
-        const selectedReader = document.getElementById('code-type').value; // Получаем выбранный тип кода
-        startScanner(selectedReader);
-    });
-
-    document.getElementById('reset-button').addEventListener('click', function () {
-        document.getElementById('search-results').innerHTML = '';
-        Quagga.stop();
-        isScanning = false; // Сброс состояния сканирования
-        document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку
-        document.getElementById('scanner-container').style.display = 'none'; // Скрыть контейнер камеры
-    });
-
-    loadGoogleSheetData();
-</script>
-
+        loadGoogleSheetData();
+    </script>
 </body>
 </html>
