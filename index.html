@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сканирование штрих-кода и QR-кода</title>
+    <title>Сканирование штрих-кода</title>
     <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
     <style>
         body {
@@ -15,21 +15,21 @@
             height: 100vh; /* Высота на весь экран */
             margin: 0; /* Убираем отступы */
             background-color: #f7f7f7; /* Фон страницы */
+            overflow: hidden; /* Убираем прокрутку */
         }
 
         #scanner-container {
             width: 100%;
-            max-width: 640px;
+            height: 100%; /* Задаем высоту на весь экран */
             position: relative;
             overflow: hidden; /* Убираем прокрутку */
-            margin-bottom: 20px; /* Отступ снизу */
-            border: 2px solid #ccc; /* Добавляем границу */
-            border-radius: 10px; /* Закругляем углы */
+            display: none; /* Скрыто по умолчанию */
             background-color: black; /* Фон камеры */
         }
 
         video {
             width: 100%;
+            height: 100%; /* Задаем высоту на весь экран */
             display: block; /* Убираем лишние пробелы */
         }
 
@@ -237,16 +237,20 @@
         isScanning = true;
         document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку перед началом сканирования
 
+        // Разворачиваем окно камеры на весь экран
+        const scannerContainer = document.getElementById('scanner-container');
+        scannerContainer.style.display = 'block'; // Показываем контейнер камеры
+
         Quagga.init({
             inputStream: {
                 type: "LiveStream",
-                target: document.querySelector('#scanner-container'),
+                target: scannerContainer,
                 constraints: {
                     facingMode: "environment",
                     width: { ideal: 1280 }, // Установка максимального разрешения
                     height: { ideal: 720 },
                     advanced: [
-                        { autofocus: false }, // Отключаем автофокус
+                        { autofocus: true }, // Включаем автофокус
                         { torch: true } // Включаем фонарик, если доступно
                     ]
                 },
@@ -281,6 +285,9 @@
             Quagga.stop(); // Останавливаем сканер после успешного сканирования
             isScanning = false; // Сбрасываем состояние сканирования
             searchByBarcode(code);
+
+            // Скрываем окно камеры после сканирования
+            scannerContainer.style.display = 'none';
         });
     }
 
@@ -294,6 +301,7 @@
         Quagga.stop();
         isScanning = false; // Сброс состояния сканирования
         document.getElementById('bounding-box').style.display = 'none'; // Скрыть рамку
+        document.getElementById('scanner-container').style.display = 'none'; // Скрыть контейнер камеры
     });
 
     loadGoogleSheetData();
