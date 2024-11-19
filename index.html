@@ -59,41 +59,47 @@
 <h1>Сканируйте штрих-код</h1>
 
 <div id="input-container">
-    <input type="text" id="barcode-input" placeholder="Введите штрих-код вручную" />
-    <button id="submit-button">Отправить</button>
+    <input type="text" id="barcode-input" placeholder="Введите штрих-код вручную" autofocus />
 </div>
 
 <div id="result"></div>
 
 <script>
-    // Предположим, что у вас уже загружены данные поддонов
+    // Инициализация данных для паллетов
     const palletsData = {
-        '1234567890123': 'Паллет №1',
-        '9876543210123': 'Паллет №2',
+        '1234567890123': 'Паллет 1: Содержимое A',
+        '7894561230123': 'Паллет 2: Содержимое B',
+        '3216549870123': 'Паллет 3: Содержимое C',
         // Добавьте сюда другие поддоны
     };
 
-    document.getElementById('submit-button').addEventListener('click', function () {
-        const barcode = document.getElementById('barcode-input').value.trim();
-        displayPalletInfo(barcode);
+    const inputField = document.getElementById('barcode-input');
+    const resultContainer = document.getElementById('result');
+
+    // Обработка ввода
+    inputField.addEventListener('input', function () {
+        const barcode = inputField.value.trim();
+
+        if (barcode.length === 13) {
+            displayPalletInfo(barcode);
+            inputField.value = ''; // Очищаем поле ввода для следующего сканирования
+        }
     });
 
     // Функция для отображения информации о поддоне
     function displayPalletInfo(barcode) {
         if (palletsData[barcode]) {
-            document.getElementById('result').textContent = 'Номер поддона: ' + palletsData[barcode];
+            resultContainer.textContent = `${barcode} - ${palletsData[barcode]}`;
         } else {
-            document.getElementById('result').textContent = 'Поддон не найден';
+            resultContainer.textContent = 'Информация о паллете не найдена.';
         }
+        inputField.focus(); // Снова фокусируемся на поле ввода
     }
 
-    // Опционально: если сканер автоматически вводит данные в поле
-    document.getElementById('barcode-input').addEventListener('keypress', function (event) {
-        if (event.key === 'Enter') { // Если нажата клавиша Enter
-            const barcode = event.target.value.trim();
-            displayPalletInfo(barcode);
-        }
-    });
+    // Устанавливаем фокус на поле ввода при загрузке
+    window.onload = function() {
+        inputField.focus();
+    };
 </script>
 
 </body>
