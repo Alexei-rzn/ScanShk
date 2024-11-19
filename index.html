@@ -75,15 +75,23 @@
 
     const inputField = document.getElementById('barcode-input');
     const resultContainer = document.getElementById('result');
+    let inputTimeout;
 
     // Обработка ввода
-    inputField.addEventListener('input', function () {
-        const barcode = inputField.value.trim();
+    inputField.addEventListener('keydown', function (event) {
+        // Сброс таймера при каждом нажатии клавиши
+        clearTimeout(inputTimeout);
 
-        if (barcode.length === 13) {
-            displayPalletInfo(barcode);
-            inputField.value = ''; // Очищаем поле ввода для следующего сканирования
-        }
+        // Запуск нового таймера на 100 миллисекунд
+        inputTimeout = setTimeout(function () {
+            const barcode = inputField.value.trim();
+
+            // Проверка длины
+            if (barcode.length === 13) {
+                displayPalletInfo(barcode);
+                inputField.value = ''; // Очищаем поле ввода для следующего сканирования
+            }
+        }, 100); // Задержка на 100 мс
     });
 
     // Функция для отображения информации о поддоне
